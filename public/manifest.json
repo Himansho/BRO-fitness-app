@@ -1,0 +1,16 @@
+{
+  "short_name": "AuraFitness",
+  "name": "Aura Fitness Encrypted Journal",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0b0e",
+  "theme_color": "#12141c",
+  "display": "standalone",
+  "orientation": "portrait"
+}
