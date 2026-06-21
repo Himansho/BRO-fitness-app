@@ -80,7 +80,7 @@ jobs:
       - name: Build iOS Xcode Project
         run: |
           cd ios/App
-          xcodebuild -project App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
+          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
 
       - name: Zip iOS Xcode Project
         run: |
