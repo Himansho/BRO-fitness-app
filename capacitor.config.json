@@ -1,0 +1,8 @@
+{
+  "appId": "com.aurafitness.app",
+  "appName": "Aura Fitness",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
