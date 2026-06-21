@@ -91,3 +91,42 @@ jobs:
         with:
           name: AuraFitness-iOS-Xcode-Project
           path: iOS-Xcode-Project.zip
+
+  create-release:
+    name: Publish Mobile Release
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: AuraFitness-Android-APK
+          path: ./artifacts/android
+
+      - name: Download iOS Xcode Project
+        uses: actions/download-artifact@v4
+        with:
+          name: AuraFitness-iOS-Xcode-Project
+          path: ./artifacts/ios
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets
+          cp artifacts/android/app-debug.apk release-assets/AuraFitness-Android.apk
+          cp artifacts/ios/iOS-Xcode-Project.zip release-assets/AuraFitness-iOS-Xcode-Project.zip
+
+      - name: Create or Update Tag and Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          tag: latest
+          name: "Aura Fitness Latest Build"
+          body: "This release contains the automatically compiled Android APK and iOS Xcode Project from the latest main branch commit."
+          artifacts: "release-assets/*"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
