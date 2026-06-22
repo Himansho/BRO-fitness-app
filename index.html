@@ -11,6 +11,22 @@
     <title>Aura Private Offline Fitness Journal</title>
   </head>
   <body>
+    <div id="error-fallback" style="display:none; background:#220808; color:#ffdddd; padding:24px; font-family:monospace; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999999; overflow:auto; box-sizing:border-box;">
+      <h2 style="color:#ff6666; margin-bottom:12px; font-size:18px; font-weight:700;">⚠️ Startup Error Detected</h2>
+      <p style="font-size:13px; margin-bottom:16px; color:#cccccc;">The app failed to load. Take a screenshot of this trace for troubleshooting:</p>
+      <pre id="error-fallback-msg" style="white-space:pre-wrap; background:#0f0404; padding:16px; border-radius:8px; border:1px solid #441111; font-size:12px; line-height:1.4; color:#ff8888;"></pre>
+    </div>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.getElementById('error-fallback').style.display = 'block';
+        document.getElementById('error-fallback-msg').innerText += '\nError: ' + e.message + '\nFile: ' + e.filename + ':' + e.lineno + ':' + e.colno + '\nStack: ' + (e.error ? e.error.stack : 'N/A') + '\n';
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        document.getElementById('error-fallback').style.display = 'block';
+        document.getElementById('error-fallback-msg').innerText += '\nUnhandled Promise: ' + e.reason + '\n';
+      });
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
