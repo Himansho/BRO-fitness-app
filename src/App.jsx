@@ -59,6 +59,9 @@ export default function App() {
 
   // 2. Smart Reminders Daemon
   useEffect(() => {
+    // Browser System Notification check
+    const hasNotificationSupport = typeof window !== 'undefined' && 'Notification' in window;
+
     const checkReminders = () => {
       const saved = localStorage.getItem('user_reminders');
       if (!saved) return;
@@ -79,8 +82,8 @@ export default function App() {
           setTimeout(() => setActiveBanner(null), 6000);
 
           // Browser System Notification
-          if (Notification.permission === 'granted') {
-            new Notification('Fitness Journal', {
+          if (hasNotificationSupport && window.Notification.permission === 'granted') {
+            new window.Notification('Fitness Journal', {
               body: matched.text,
               icon: '/favicon.ico'
             });
@@ -90,8 +93,8 @@ export default function App() {
     };
 
     // Request notification permission on first interaction
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
+    if (hasNotificationSupport && window.Notification.permission === 'default') {
+      window.Notification.requestPermission();
     }
 
     const interval = setInterval(checkReminders, 20000); // Check every 20s
