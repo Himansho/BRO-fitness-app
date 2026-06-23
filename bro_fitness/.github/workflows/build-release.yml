@@ -1,0 +1,97 @@
+name: Build & Release APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    name: Build Flutter APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build Debug APK
+        run: flutter build apk --debug --build-name=1.0.0 --build-number=${{ github.run_number }}
+
+      - name: Build Release APK
+        run: flutter build apk --release --build-name=1.0.0 --build-number=${{ github.run_number }}
+
+      - name: Rename APKs
+        run: |
+          mv build/app/outputs/flutter-apk/app-debug.apk build/app/outputs/flutter-apk/BROFitness-debug.apk
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/BROFitness-Android.apk
+
+      - name: Upload Debug APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BROFitness-debug-apk
+          path: build/app/outputs/flutter-apk/BROFitness-debug.apk
+          retention-days: 30
+
+      - name: Upload Release APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BROFitness-release-apk
+          path: build/app/outputs/flutter-apk/BROFitness-Android.apk
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "BRO Fitness v1.0.${{ github.run_number }}"
+          body: |
+            ## 🏋️ BRO Fitness — Ultra-Private Offline Fitness Journal
+
+            ### Download
+            👇 **Tap `BROFitness-Android.apk` below to download and install on your Android phone.**
+
+            ### How to install
+            1. Download `BROFitness-Android.apk`
+            2. On your phone: Settings → Security → **Enable "Install from Unknown Sources"**
+            3. Open the downloaded APK and tap Install
+            4. Done! 🎉
+
+            ### What's included
+            - 🍽️ Meal tracking with 70+ Indian & international foods
+            - 🏋️ Workout logging with 1RM calculator, PR tracker, rest timer
+            - 📸 Progress photo gallery with before/after comparison
+            - 📄 Weekly PDF report generation
+            - 💾 Full data backup & restore (ZIP)
+            - 🔒 100% offline & private — no cloud, no tracking
+            - 🔥 Workout streaks, water tracker, body measurements
+
+            ### Build info
+            - Build: #${{ github.run_number }}
+            - Flutter: 3.44.2
+            - Min Android: 5.0 (API 21)
+          files: |
+            build/app/outputs/flutter-apk/BROFitness-Android.apk
+            build/app/outputs/flutter-apk/BROFitness-debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
