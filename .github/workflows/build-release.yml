@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write   # REQUIRED: allows creating releases and uploading assets
+
 jobs:
   build-android:
     name: Build Android APK
@@ -27,51 +30,68 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Verify Flutter project exists
+        run: |
+          ls -la
+          ls -la bro_fitness/
+
       - name: Get dependencies
         working-directory: bro_fitness
         run: flutter pub get
+
+      - name: Flutter analyze
+        working-directory: bro_fitness
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
 
       - name: Build Release APK
         working-directory: bro_fitness
         run: flutter build apk --release --build-name=1.0.0 --build-number=${{ github.run_number }}
 
-      - name: Rename APK
-        run: mv bro_fitness/build/app/outputs/flutter-apk/app-release.apk bro_fitness/build/app/outputs/flutter-apk/BROFitness-Android.apk
+      - name: Verify APK was created
+        run: |
+          ls -la bro_fitness/build/app/outputs/flutter-apk/
+          cp bro_fitness/build/app/outputs/flutter-apk/app-release.apk BROFitness-Android.apk
+          echo "APK size: $(du -sh BROFitness-Android.apk)"
 
-      - name: Upload APK artifact
+      - name: Upload APK as artifact (always available)
         uses: actions/upload-artifact@v4
         with:
-          name: BROFitness-Android-apk
-          path: bro_fitness/build/app/outputs/flutter-apk/BROFitness-Android.apk
-          retention-days: 30
+          name: BROFitness-Android-v1.0.${{ github.run_number }}
+          path: BROFitness-Android.apk
+          retention-days: 90
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release with APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: "BRO Fitness v1.0.${{ github.run_number }}"
+          name: "🏋️ BRO Fitness v1.0.${{ github.run_number }}"
           body: |
             ## 🏋️ BRO Fitness — Ultra-Private Offline Fitness Journal
 
-            ### ⬇️ Download & Install
-            1. Tap **`BROFitness-Android.apk`** below to download
-            2. On your phone: **Settings → Security → Enable "Unknown Sources"**
-            3. Open the downloaded APK → tap **Install**
-            4. Open the app and start your fitness journey! 🚀
+            ### ⬇️ How to Download & Install
+            1. Tap **`BROFitness-Android.apk`** below ↓
+            2. On your Android phone: **Settings → Security → Allow Unknown Sources**
+            3. Open the downloaded APK file → tap **Install**
+            4. Open **BRO Fitness** and enjoy! 🚀
+
+            ---
 
             ### Features
-            - 🍽️ Meal logging — 70+ Indian & international foods with full macros
-            - 🏋️ Workout tracking — sets, reps, weight + live 1RM calculator
-            - 🏆 PR Tracker — automatic personal record detection with badge
-            - ⏱️ Rest Timer — 60/90/120/180s countdown
-            - 📸 Progress photos — gallery + before/after side-by-side compare
-            - 📄 Weekly PDF report generation & sharing
-            - 💾 Full data backup & restore (ZIP file)
-            - 💧 Water intake tracker
-            - 📏 Body measurements log
-            - 🔒 100% offline & private — no internet, no tracking, no ads
-          files: bro_fitness/build/app/outputs/flutter-apk/BROFitness-Android.apk
+            - 🍽️ **Meal logging** — 70+ Indian & international foods with full macros
+            - 🏋️ **Workout tracking** — sets, reps, weight + live 1RM calculator
+            - 🏆 **PR Tracker** — automatic personal record detection
+            - ⏱️ **Rest Timer** — 60/90/120/180s countdown with haptic feedback
+            - 📸 **Progress photos** — gallery + before/after side-by-side compare
+            - 📄 **Weekly PDF reports** — auto-generated with charts
+            - 💾 **Full backup & restore** — ZIP export for all your data
+            - 💧 **Water intake tracker** — daily hydration goals
+            - 📏 **Body measurements** — chest, waist, arms, thighs, shoulders
+            - 🔒 **100% offline & private** — no internet, no cloud, no tracking, no ads
+
+            ---
+            Build #${{ github.run_number }} | Flutter 3.44.2 | Min Android 5.0 (API 21)
+          files: BROFitness-Android.apk
+          make_latest: true
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
