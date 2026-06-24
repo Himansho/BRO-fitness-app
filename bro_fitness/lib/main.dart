@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_theme.dart';
 import 'database/database_helper.dart';
+import 'services/notification_service.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -17,8 +18,14 @@ void main() async {
   // Initialize database
   await DatabaseHelper.instance.database;
 
+  // Initialize notifications (non-fatal if fails)
+  try {
+    await NotificationService.instance.initialize();
+  } catch (_) {}
+
   runApp(const BroFitnessApp());
 }
+
 
 class BroFitnessApp extends StatelessWidget {
   const BroFitnessApp({super.key});

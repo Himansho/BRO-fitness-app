@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class WorkoutSet {
   double weight;  // kg
   int reps;
@@ -70,14 +72,13 @@ class WorkoutLog {
   bool get hasPR => sets.any((s) => s.isPR);
 
   Map<String, dynamic> toMap() {
-    final setsJson = sets.map((s) => s.toJson()).toList();
     return {
       'id': id,
       'date': date,
       'exerciseName': exerciseName,
       'exerciseType': exerciseType,
       'primaryMuscle': primaryMuscle,
-      'sets': setsJson.toString(),   // stored as JSON string in SQLite
+      'sets': json.encode(sets.map((s) => s.toJson()).toList()),
       'durationMinutes': durationMinutes,
       'distanceKm': distanceKm,
       'notes': notes,
@@ -114,32 +115,22 @@ class WorkoutLog {
   }
 
   static List<WorkoutSet> _parseSets(String setsStr) {
-    // Simple manual parse for our known format
-    // Format: [{weight: 100.0, reps: 8, isWarmup: false, isPR: false, note: null}, ...]
-    final List<WorkoutSet> result = [];
-    final regex = RegExp(r'\{([^}]+)\}');
-    for (final match in regex.allMatches(setsStr)) {
-      final content = match.group(1)!;
-      final Map<String, dynamic> values = {};
-      for (final part in content.split(',')) {
-        final kv = part.trim().split(':');
-        if (kv.length >= 2) {
-          final key = kv[0].trim();
-          final val = kv.sublist(1).join(':').trim();
-          values[key] = val;
-        }
-      }
-      try {
-        result.add(WorkoutSet(
-          weight: double.tryParse(values['weight']?.toString() ?? '0') ?? 0,
-          reps: int.tryParse(values['reps']?.toString() ?? '0') ?? 0,
-          isWarmup: values['isWarmup']?.toString() == 'true',
-          isPR: values['isPR']?.toString() == 'true',
-          note: values['note']?.toString() == 'null' ? null : values['note']?.toString(),
-        ));
-      } catch (_) {}
+    if (setsStr.isEmpty || setsStr == '[]') return [];
+    try {
+      final decoded = json.decode(setsStr) as List<dynamic>;
+      return decoded.map((item) {
+        final m = item as Map<String, dynamic>;
+        return WorkoutSet(
+          weight: (m['weight'] as num?)?.toDouble() ?? 0,
+          reps: (m['reps'] as num?)?.toInt() ?? 0,
+          isWarmup: m['isWarmup'] as bool? ?? false,
+          isPR: m['isPR'] as bool? ?? false,
+          note: m['note'] as String?,
+        );
+      }).toList();
+    } catch (_) {
+      return [];
     }
-    return result;
   }
 
   Map<String, dynamic> toJson() => toMap();

@@ -233,10 +233,7 @@ class DatabaseHelper {
   // ─────────────────── WORKOUT LOGS ───────────────────
   Future<int> insertWorkout(WorkoutLog workout) async {
     final db = await database;
-    final map = workout.toMap();
-    // Convert sets list to a parseable string
-    map['sets'] = workout.sets.map((s) => s.toJson().toString()).toList().toString();
-    return await db.insert('workout_logs', map);
+    return await db.insert('workout_logs', workout.toMap());
   }
 
   Future<List<WorkoutLog>> getWorkoutsForDate(String date) async {
