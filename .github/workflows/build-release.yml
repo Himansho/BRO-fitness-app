@@ -1,0 +1,77 @@
+name: Build & Release APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        working-directory: bro_fitness
+        run: flutter pub get
+
+      - name: Build Release APK
+        working-directory: bro_fitness
+        run: flutter build apk --release --build-name=1.0.0 --build-number=${{ github.run_number }}
+
+      - name: Rename APK
+        run: mv bro_fitness/build/app/outputs/flutter-apk/app-release.apk bro_fitness/build/app/outputs/flutter-apk/BROFitness-Android.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BROFitness-Android-apk
+          path: bro_fitness/build/app/outputs/flutter-apk/BROFitness-Android.apk
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "BRO Fitness v1.0.${{ github.run_number }}"
+          body: |
+            ## 🏋️ BRO Fitness — Ultra-Private Offline Fitness Journal
+
+            ### ⬇️ Download & Install
+            1. Tap **`BROFitness-Android.apk`** below to download
+            2. On your phone: **Settings → Security → Enable "Unknown Sources"**
+            3. Open the downloaded APK → tap **Install**
+            4. Open the app and start your fitness journey! 🚀
+
+            ### Features
+            - 🍽️ Meal logging — 70+ Indian & international foods with full macros
+            - 🏋️ Workout tracking — sets, reps, weight + live 1RM calculator
+            - 🏆 PR Tracker — automatic personal record detection with badge
+            - ⏱️ Rest Timer — 60/90/120/180s countdown
+            - 📸 Progress photos — gallery + before/after side-by-side compare
+            - 📄 Weekly PDF report generation & sharing
+            - 💾 Full data backup & restore (ZIP file)
+            - 💧 Water intake tracker
+            - 📏 Body measurements log
+            - 🔒 100% offline & private — no internet, no tracking, no ads
+          files: bro_fitness/build/app/outputs/flutter-apk/BROFitness-Android.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
